@@ -1,4 +1,4 @@
-Welcome to Pixel Learning Co.
-This course will guide you through the fundamentals of cloud computing and AI services.
-We believe that learning should be accessible to everyone, everywhere, at any time.
-Let's begin your journey today. This is great
+Welcome to my AWS AI portfolio project.
+This demonstration uses Amazon Polly to convert text to speech
+and store the audio output in Amazon S3.
+Built by Darryl Jordan as part of a cloud and AI learning journey.
