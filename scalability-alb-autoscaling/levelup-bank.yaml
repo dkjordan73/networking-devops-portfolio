@@ -1,0 +1,301 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Level-Up Bank - Auto Scaling Group with ALB on AWS
+
+Parameters:
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Name of an existing EC2 Key Pair
+    Default: Thor_Server
+
+  InstanceType:
+    Type: String
+    Default: t3.micro
+    Description: EC2 instance type
+
+  AmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+    Description: Latest Amazon Linux 2023 AMI
+
+Resources:
+
+  # -------------------------------------------------------
+  # VPC
+  # -------------------------------------------------------
+  LevelUpVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.10.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: LevelUp-VPC
+
+  # -------------------------------------------------------
+  # Internet Gateway
+  # -------------------------------------------------------
+  LevelUpIGW:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: LevelUp-IGW
+
+  AttachIGW:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref LevelUpVPC
+      InternetGatewayId: !Ref LevelUpIGW
+
+  # -------------------------------------------------------
+  # Public Subnets
+  # -------------------------------------------------------
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref LevelUpVPC
+      CidrBlock: 10.10.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: LevelUp-Subnet-1
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref LevelUpVPC
+      CidrBlock: 10.10.2.0/24
+      AvailabilityZone: !Select [1, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: LevelUp-Subnet-2
+
+  PublicSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref LevelUpVPC
+      CidrBlock: 10.10.3.0/24
+      AvailabilityZone: !Select [2, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: LevelUp-Subnet-3
+
+  # -------------------------------------------------------
+  # Route Table
+  # -------------------------------------------------------
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref LevelUpVPC
+      Tags:
+        - Key: Name
+          Value: LevelUp-RT
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachIGW
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref LevelUpIGW
+
+  Subnet1RouteAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+
+  Subnet2RouteAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+
+  Subnet3RouteAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet3
+      RouteTableId: !Ref PublicRouteTable
+
+  # -------------------------------------------------------
+  # Security Groups
+  # -------------------------------------------------------
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: LevelUp-ALB-SG
+      GroupDescription: Allow HTTP from internet to ALB
+      VpcId: !Ref LevelUpVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: LevelUp-ALB-SG
+
+  WebServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: LevelUp-Web-SG
+      GroupDescription: Allow HTTP from ALB only
+      VpcId: !Ref LevelUpVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId: !Ref ALBSecurityGroup
+      Tags:
+        - Key: Name
+          Value: LevelUp-Web-SG
+
+  # -------------------------------------------------------
+  # Launch Template
+  # -------------------------------------------------------
+  LevelUpLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: LevelUp-LT
+      LaunchTemplateData:
+        ImageId: !Ref AmiId
+        InstanceType: !Ref InstanceType
+        KeyName: !Ref KeyPairName
+        SecurityGroupIds:
+          - !Ref WebServerSecurityGroup
+        BlockDeviceMappings:
+          - DeviceName: /dev/xvda
+            Ebs:
+              VolumeSize: 30
+              VolumeType: gp3
+              DeleteOnTermination: true
+        TagSpecifications:
+          - ResourceType: instance
+            Tags:
+              - Key: Name
+                Value: LevelUp-Instance
+        UserData:
+          Fn::Base64: |
+            #!/bin/bash
+            sudo yum update -y
+            sudo yum install -y httpd
+            sudo systemctl start httpd
+            sudo systemctl enable httpd
+
+            TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" \
+              -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+
+            AZ=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" \
+              http://169.254.169.254/latest/meta-data/placement/availability-zone)
+
+            INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" \
+              http://169.254.169.254/latest/meta-data/instance-id)
+
+            cat > /var/www/html/index.html <<EOF
+            <html>
+            <head><title>Level-Up Bank</title></head>
+            <body style="font-family: Arial, sans-serif; text-align: center; background-color: #f0f4f8; padding: 50px;">
+              <h1 style="color: #1a3c5e;">Welcome to Level-Up Bank</h1>
+              <h2 style="color: #2e7d32;">Your Trusted Cloud-Powered Bank</h2>
+              <hr style="width: 50%;">
+              <h3>Availability Zone: $AZ</h3>
+              <h3>Instance ID: $INSTANCE_ID</h3>
+              <p style="color: #555;">Powered by AWS Auto Scaling for high availability and reliability.</p>
+            </body>
+            </html>
+            EOF
+
+            systemctl restart httpd.service
+
+  # -------------------------------------------------------
+  # Application Load Balancer
+  # -------------------------------------------------------
+  LevelUpALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: LevelUp-ALB
+      Scheme: internet-facing
+      Type: application
+      SecurityGroups:
+        - !Ref ALBSecurityGroup
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+        - !Ref PublicSubnet3
+      Tags:
+        - Key: Name
+          Value: LevelUp-ALB
+
+  LevelUpTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: LevelUp-TG
+      Protocol: HTTP
+      Port: 80
+      VpcId: !Ref LevelUpVPC
+      TargetType: instance
+      HealthCheckProtocol: HTTP
+      HealthCheckPath: /
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+      HealthCheckIntervalSeconds: 30
+      Tags:
+        - Key: Name
+          Value: LevelUp-TG
+
+  LevelUpListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LevelUpALB
+      Protocol: HTTP
+      Port: 80
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref LevelUpTargetGroup
+
+  # -------------------------------------------------------
+  # Auto Scaling Group
+  # -------------------------------------------------------
+  LevelUpASG:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    DependsOn: AttachIGW
+    Properties:
+      AutoScalingGroupName: LevelUp-ASG
+      MinSize: '2'
+      MaxSize: '5'
+      DesiredCapacity: '2'
+      LaunchTemplate:
+        LaunchTemplateId: !Ref LevelUpLaunchTemplate
+        Version: !GetAtt LevelUpLaunchTemplate.LatestVersionNumber
+      VPCZoneIdentifier:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+        - !Ref PublicSubnet3
+      TargetGroupARNs:
+        - !Ref LevelUpTargetGroup
+      HealthCheckType: ELB
+      HealthCheckGracePeriod: 300
+      Tags:
+        - Key: Name
+          Value: LevelUp-ASG
+          PropagateAtLaunch: false
+
+# -------------------------------------------------------
+# Outputs
+# -------------------------------------------------------
+Outputs:
+  ALBDNSName:
+    Description: Use this URL to access the Level-Up Bank website
+    Value: !Sub 'http://${LevelUpALB.DNSName}'
+
+  VPCID:
+    Description: VPC ID
+    Value: !Ref LevelUpVPC
+
+  ASGName:
+    Description: Auto Scaling Group Name
+    Value: !Ref LevelUpASG
