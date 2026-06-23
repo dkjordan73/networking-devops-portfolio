@@ -206,3 +206,9 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 .DS_Store
+
+# AI capstone projects (live in their own repo)
+CAI_01/
+CAI_02/
+CAI_03/
+CAI_04/
