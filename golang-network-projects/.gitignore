@@ -1,0 +1,15 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.pem
+ec2_instance.txt
+knowledge_base_id.txt
+*accessKeys*.csv
+*credentials*
+.DS_Store
+node_modules/
+*.egg-info/
+.terraform/

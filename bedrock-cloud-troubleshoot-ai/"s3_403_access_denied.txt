@@ -1,0 +1,59 @@
+ "s3_403_access_denied.txt": """
+S3 Bucket 403 Access Denied - Troubleshooting Guide
+
+SYMPTOMS
+- AWS CLI returns: An error occurred (AccessDenied) when calling the GetObject operation
+- Console shows "Access Denied" when trying to access objects
+- Application receives HTTP 403 from S3 endpoint
+- Pre-signed URLs stop working
+
+DIAGNOSTIC STEPS
+
+Step 1: Verify IAM Permissions
+- Check the IAM user/role has the required S3 permissions:
+  {
+    "Effect": "Allow",
+    "Action": ["s3:GetObject", "s3:PutObject", "s3:ListBucket"],
+    "Resource": ["arn:aws:s3:::mybucket", "arn:aws:s3:::mybucket/*"]
+  }
+- Test with: aws s3 ls s3://mybucket --debug 2>&1 | grep "Credential"
+- Simulate policy: aws iam simulate-principal-policy --policy-source-arn <iam-arn> --action-names s3:GetObject --resource-arns arn:aws:s3:::mybucket/myfile.txt
+
+Step 2: Check Bucket Policy
+- View the bucket policy: aws s3api get-bucket-policy --bucket mybucket
+- A Deny statement in the bucket policy overrides any IAM Allow
+- Common problematic statement — Deny if not using HTTPS:
+  { "Effect": "Deny", "Action": "s3:*", "Condition": {"Bool": {"aws:SecureTransport": "false"}} }
+
+Step 3: Check Block Public Access Settings
+- If accessing publicly: aws s3api get-public-access-block --bucket mybucket
+- All four settings being true blocks all public access
+- For public buckets, the bucket policy must also grant s3:GetObject to "*"
+
+Step 4: Check Object ACL (if using ACLs)
+- aws s3api get-object-acl --bucket mybucket --key myfile.txt
+- For private buckets, ACLs should not matter if IAM allows access
+- Note: AWS now recommends bucket policies over ACLs
+
+Step 5: Check KMS Encryption
+- If the object is encrypted with KMS, the IAM identity also needs:
+  kms:Decrypt permission on the specific KMS key
+- Check: aws s3api head-object --bucket mybucket --key myfile.txt
+  Look for ServerSideEncryption and SSEKMSKeyId
+
+Step 6: Check VPC Endpoint Policy (if using VPC endpoint)
+- If accessing S3 through a VPC Gateway Endpoint, the endpoint policy may restrict access
+- Check the endpoint policy in VPC Console > Endpoints
+
+Step 7: Check Cross-Account Access
+- If the bucket is in a different AWS account, both the bucket policy
+  AND the IAM policy in the accessing account must grant access
+- The bucket policy must explicitly allow the external account's ARN
+
+COMMON ROOT CAUSES
+1. Missing s3:GetObject or s3:ListBucket in IAM policy
+2. Explicit Deny in bucket policy overriding IAM Allow
+3. Block Public Access enabled when trying public access
+4. KMS key permission missing for encrypted objects
+5. Cross-account: bucket policy missing external account ARN
+""",

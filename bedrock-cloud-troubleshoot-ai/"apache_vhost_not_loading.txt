@@ -1,0 +1,74 @@
+ "apache_vhost_not_loading.txt": """
+Apache Virtual Host Not Loading - Troubleshooting Guide
+
+SYMPTOMS
+- Browser shows default Apache page instead of vhost site
+- 403 Forbidden or 404 Not Found errors
+- Site works on one server but not another
+- DNS resolves correctly but site does not load
+
+DIAGNOSTIC STEPS
+
+Step 1: Check Apache Status
+- sudo systemctl status apache2     (Ubuntu/Debian)
+- sudo systemctl status httpd       (RHEL/CentOS/Amazon Linux)
+- If Apache is not running: sudo systemctl start apache2
+
+Step 2: Test Apache Config Syntax
+- sudo apache2ctl configtest         (Ubuntu/Debian)
+- sudo apachectl configtest          (RHEL/CentOS)
+- Look for "Syntax OK" — any errors show the file and line number
+
+Step 3: Check VirtualHost File
+- Verify the file is in the correct directory:
+  Ubuntu: /etc/apache2/sites-available/yoursite.conf
+  RHEL:   /etc/httpd/conf.d/yoursite.conf
+- Minimum correct vhost block:
+  <VirtualHost *:80>
+      ServerName yourdomain.com
+      ServerAlias www.yourdomain.com
+      DocumentRoot /var/www/yoursite
+      ErrorLog ${APACHE_LOG_DIR}/yoursite_error.log
+      CustomLog ${APACHE_LOG_DIR}/yoursite_access.log combined
+  </VirtualHost>
+
+Step 4: Enable the Site (Ubuntu/Debian only)
+- sudo a2ensite yoursite.conf
+- sudo systemctl reload apache2
+- Check that a symlink exists: ls -la /etc/apache2/sites-enabled/
+
+Step 5: Check DocumentRoot Permissions
+- The directory must exist: ls -la /var/www/yoursite
+- Apache user (www-data on Ubuntu, apache on RHEL) needs read access
+- Fix permissions: sudo chown -R www-data:www-data /var/www/yoursite
+- Set directory permissions: sudo chmod 755 /var/www/yoursite
+- Set file permissions: sudo chmod 644 /var/www/yoursite/*.html
+
+Step 6: Check ServerName Matches Request
+- The ServerName in the vhost MUST match the Host header in the browser request
+- Test with curl: curl -H "Host: yourdomain.com" http://your-server-ip
+- Verify DNS: nslookup yourdomain.com
+
+Step 7: Check Apache Error Logs
+- Ubuntu: sudo tail -100 /var/log/apache2/error.log
+- RHEL: sudo tail -100 /var/log/httpd/error_log
+- Site-specific: sudo tail -100 /var/log/apache2/yoursite_error.log
+
+Step 8: Check mod_rewrite (if using .htaccess)
+- Ensure mod_rewrite is enabled: sudo a2enmod rewrite
+- AllowOverride must be set to All in the vhost config:
+  <Directory /var/www/yoursite>
+      AllowOverride All
+  </Directory>
+
+Step 9: Check AWS Security Group
+- Port 80 must be open: Inbound rule TCP 80 from 0.0.0.0/0
+- Port 443 must be open if using HTTPS
+
+COMMON ROOT CAUSES
+1. Site not enabled (missing symlink in sites-enabled) — Ubuntu specific
+2. Wrong DocumentRoot path or directory does not exist
+3. Permissions deny Apache from reading files
+4. ServerName does not match the domain
+5. Config syntax error preventing Apache from loading the vhost
+""",

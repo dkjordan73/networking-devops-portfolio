@@ -1,0 +1,75 @@
+"lambda_timeout.txt": ""
+Lambda Function Timing Out - Troubleshooting Guide
+
+SYMPTOMS
+- Function returns: Task timed out after X.XX seconds
+- CloudWatch logs show partial execution then stop
+- API Gateway returns 504 Gateway Timeout
+- Asynchronous invocations silently fail
+
+DIAGNOSTIC STEPS
+
+Step 1: Check and Increase the Timeout Setting
+- Default timeout is 3 seconds — often too short for real workloads
+- Go to Lambda Console > Configuration > General configuration > Timeout
+- Maximum timeout is 15 minutes (900 seconds)
+- Increase timeout: aws lambda update-function-configuration --function-name <name> --timeout 60
+- Set timeout to 2x your expected execution time as a buffer
+
+Step 2: Check CloudWatch Logs for the Bottleneck
+- Go to CloudWatch > Log Groups > /aws/lambda/<function-name>
+- Find the last log line before the timeout — this shows WHERE execution stopped
+- Add timing logs to your code to identify slow sections:
+  import time
+  start = time.time()
+  # your code here
+  print(f"Step completed in {time.time() - start:.2f}s")
+
+Step 3: Check VPC Configuration
+- Lambda functions in a VPC have cold start latency of 1-3 seconds
+- VPC Lambda requires an ENI — check your ENI limits in the region
+- Verify the Lambda has a route to the internet via NAT Gateway if it calls external APIs
+- Lambda in VPC with no NAT cannot reach AWS services unless using VPC Endpoints
+
+Step 4: Check for Connection Issues to Downstream Services
+- Timeouts often happen when Lambda cannot reach RDS, DynamoDB, or an API
+- Test connectivity from inside the VPC using another EC2 instance
+- Check security groups allow Lambda's security group to reach the target service
+- For RDS: the RDS security group must allow inbound from Lambda's security group
+
+Step 5: Check for Memory/CPU Throttling
+- Low memory = slower CPU allocation in Lambda
+- Increase memory: aws lambda update-function-configuration --function-name <name> --memory-size 512
+- More memory = more CPU = faster execution (at slightly higher cost)
+- Check memory usage in CloudWatch Logs — "Max Memory Used" line
+
+Step 6: Optimize Cold Starts
+- Move SDK client initialization outside the handler function:
+  # WRONG — inside handler, runs every invocation
+  def handler(event, context):
+      s3 = boto3.client('s3')  # cold and warm
+  # RIGHT — outside handler, runs once per container
+  import boto3
+  s3 = boto3.client('s3')
+  def handler(event, context):
+      # reuses s3 client
+
+Step 7: Check for Infinite Loops or Blocking Operations
+- Review code for loops without exit conditions
+- Check for synchronous waits or blocking I/O without timeouts
+- Set connection timeouts on all HTTP/database clients:
+  import requests
+  response = requests.get(url, timeout=10)  # always set timeout
+
+Step 8: Check Concurrency and Throttling
+- If reserved concurrency is set to 0, all invocations are throttled
+- Check: aws lambda get-function-concurrency --function-name <name>
+- Throttled functions return 429 errors, not timeouts — but worth checking
+
+COMMON ROOT CAUSES
+1. Default 3-second timeout too short for the actual workload
+2. Lambda in VPC cannot reach the internet (missing NAT Gateway)
+3. Database connection timeout — security group blocking Lambda to RDS
+4. SDK clients initialized inside handler (cold start penalty each invocation)
+5. External API call hanging — missing request timeout on HTTP client
+""",

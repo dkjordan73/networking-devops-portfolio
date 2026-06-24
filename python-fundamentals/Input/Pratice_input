@@ -1,0 +1,4 @@
+with open("practice.txt", "w") as file:
+    file.write("python is fun\n")
+    file.write("File I/O is useful\n")
+    file.write("I am learning persistence\n")

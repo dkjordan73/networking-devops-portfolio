@@ -1,0 +1,70 @@
+"ec2_ssh_unreachable.txt": 
+EC2 Instance Unreachable via SSH - Troubleshooting Guide
+
+SYMPTOMS
+- ssh: connect to host x.x.x.x port 22: Connection timed out
+- ssh: connect to host x.x.x.x port 22: Connection refused
+- SSH hangs indefinitely with no response
+- EC2 Instance Connect fails in the console
+
+DIAGNOSTIC STEPS
+
+Step 1: Check Security Group Inbound Rules
+- This is the most common cause — verify port 22 is open
+- Go to EC2 Console > Security Groups > Inbound Rules
+- Required rule: TCP Port 22, Source: your IP address (or 0.0.0.0/0 for testing)
+- Find your IP: curl ifconfig.me
+- Add rule if missing: aws ec2 authorize-security-group-ingress --group-id <sg-id> --protocol tcp --port 22 --cidr <your-ip>/32
+
+Step 2: Check the Instance State
+- Verify the instance is running: aws ec2 describe-instances --instance-ids <id> --query 'Reservations[*].Instances[*].State.Name'
+- If stopped, start it: aws ec2 start-instances --instance-ids <id>
+- Check System Status Checks and Instance Status Checks in the console
+- If checks are failing, try stopping and starting (not rebooting) the instance
+
+Step 3: Verify the Public IP / DNS
+- Confirm you are connecting to the right IP
+- aws ec2 describe-instances --instance-ids <id> --query 'Reservations[*].Instances[*].PublicIpAddress'
+- Note: Public IPs change on stop/start unless using an Elastic IP
+- Use the public DNS name: ec2-x-x-x-x.compute-1.amazonaws.com
+
+Step 4: Verify the Correct Key Pair and Username
+- Wrong key file is a silent failure — no error message, just timeout
+- Amazon Linux 2: ssh -i mykey.pem ec2-user@<ip>
+- Ubuntu: ssh -i mykey.pem ubuntu@<ip>
+- RHEL/CentOS: ssh -i mykey.pem ec2-user@<ip> or root@<ip>
+- Key file permissions must be 400: chmod 400 mykey.pem
+- Debug: ssh -vvv -i mykey.pem ec2-user@<ip>
+
+Step 5: Check Network ACLs
+- NACLs are stateless — both inbound AND outbound must allow SSH
+- Inbound: TCP port 22 from your IP
+- Outbound: TCP ephemeral ports 1024-65535 to your IP (return traffic)
+
+Step 6: Check the Route Table
+- The subnet must have a route to the Internet Gateway (for public subnets)
+- 0.0.0.0/0 → igw-xxxxxxxx must exist in the route table
+
+Step 7: Use EC2 Instance Connect (Browser-based SSH)
+- In the EC2 console, select instance > Connect > EC2 Instance Connect
+- This bypasses key pair issues and tests connectivity from AWS's network
+- If this works, your local firewall or ISP may be blocking port 22
+
+Step 8: Use Systems Manager Session Manager (no SSH needed)
+- If SSM Agent is installed, you can connect without any open ports
+- aws ssm start-session --target <instance-id>
+- No security group rule needed for port 22
+
+Step 9: Check sshd on the Instance (if you have console access)
+- Via EC2 Serial Console or by mounting the root volume on another instance
+- sudo systemctl status sshd
+- Check /var/log/auth.log or /var/log/secure for authentication failures
+- Verify /etc/ssh/sshd_config has PasswordAuthentication and PubkeyAuthentication set correctly
+
+COMMON ROOT CAUSES
+1. Security group missing inbound TCP port 22 rule (most common)
+2. Wrong key pair or wrong username for the AMI
+3. Key file permissions not set to 400
+4. Instance has no public IP or IP changed after stop/start
+5. NACL blocking port 22 inbound or ephemeral ports outbound
+""",

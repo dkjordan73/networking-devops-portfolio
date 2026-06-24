@@ -1,0 +1,9 @@
+username = "admin"
+password = "1234"
+entered_user = input("Enter username: ")
+entered_pass = input("Enter password: ")
+if entered_user == username and entered_pass == password:
+    print("Access granted")
+else:
+    print("Access denied")
+

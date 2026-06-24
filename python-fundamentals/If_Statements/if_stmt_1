@@ -1,0 +1,66 @@
+################################
+# if condition:
+#     code to run if condition is true
+################################
+
+age = 18
+if age >= 18:
+    print ("you are an adult.")
+    
+score = 75
+if score >= 70:
+    print ("you passed!")
+
+################################
+# if condition:
+#      runs if true
+# else:
+#      runs if fasle
+################################
+
+temperature = 60
+if temperature > 70:
+    print ("It's warm outside. ")
+else:
+    print("It's cold outside. ")
+
+################################
+# if condition1:
+#     runs if true
+# elif condition2:
+#      runs if condition1 is false and condition2 is true
+# else:
+#      runs if all conditions are false
+################################
+
+grade = 85
+if grade >= 90:
+    print("A")
+elif grade >= 80:
+    print("B")
+elif grade >= 70:
+    print("C")
+else:
+    print("F")
+
+################################
+# Logical Operators
+# and ; or
+################################
+
+age = 25
+has_license = True
+if age >=18 and has_license:
+    print("You can drive. ")
+
+################################
+# Nested statements
+# if statements placed inside other if statements
+################################
+
+age = 20
+if age >= 21:
+    print("You are an adult. ")
+    if age >= 21:
+        print("You can legally drink. ")
+
