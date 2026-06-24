@@ -2,7 +2,7 @@
 
 A CloudFormation template that deploys a fault-tolerant web application across three availability zones, fronted by an Application Load Balancer and backed by an Auto Scaling group. The whole environment builds from this one file.
 
-Full write-up: [From Two Servers to Three Under Load: Auto Scaling on AWS](#) (replace with the published article link).
+Full write-up: [From Two Servers to Three Under Load: Auto Scaling on AWS](https://medium.com/@SouthGA_CloudEngineer/from-two-servers-to-three-under-load-auto-scaling-on-aws-3cda70c921b1).
 
 ## Architecture
 
