@@ -1,86 +1,84 @@
-# Networking & DevOps Engineering Portfolio
+# Networking & Cloud Engineering Portfolio
 
-Welcome to my technical portfolio.  
-This repository showcases hands-on projects, labs, automation scripts, and documented solutions across:
+Network engineer with 20 years in enterprise infrastructure, transitioning into cloud architecture and DevOps. This repo contains hands-on projects, automation tools, and labs built around AWS, Python, Bash, and infrastructure-as-code.
 
-- **Network Engineering**
-- **Cloud Networking (AWS / Azure)**
-- **DevOps & Infrastructure as Code**
-- **Network Automation (Python, Bash, PowerShell)**
-
-It serves as a living record of the problems I've solved and the technologies I work with.
+The focus is practical work — real deployments, real problems, documented clearly.
 
 ---
 
-## 📂 Repository Structure
+## What's Here
 
-### 🔹 Networking (`/networking`)
-Deep-dive labs and case studies in:
-- Packet walkthroughs (L2–L7 analysis)
-- BGP labs, route reflectors, filtering, policies
-- OSPF design, multi-area deployments
-- VPN projects (IPSec, DMVPN, S2S)
-- Troubleshooting case studies
+### AI & Cloud Projects (`/CAI_01` – `/CAI_04`)
 
-### 🔹 DevOps (`/devops`)
-Infrastructure-as-Code & automation:
-- Terraform projects (AWS / Azure)
-- Ansible for server & network automation
-- CI/CD pipeline examples (GitHub Actions)
+A series of progressively complex cloud and AI engineering projects built during active training and transition work.
 
-### 🔹 Cloud Networking (`/cloud-networking`)
-Cloud architecture, hybrid connectivity, and designs:
-- AWS VPC architectures, routing, security designs
-- AWS hybrid networking (VPN, TGW, DX)
-- Azure VNet architectures, peering, ER/VPN
-- Azure hybrid connectivity labs
+**CAI_01 – AI-Powered Cloud Troubleshooting Assistant**  
+Built and deployed an AI assistant using Amazon Bedrock (Nova Lite), a Bedrock Knowledge Base backed by S3 Vectors, and a Streamlit front end hosted on EC2. Resolved real deployment blockers including IAM trust policy misconfigurations, broken AWS CLI dependencies, and Python version incompatibilities.  
+*Stack: AWS Bedrock, S3 Vectors, EC2, IAM, Streamlit, Python*
 
-### 🔹 Automation (`/automation`)
-Scripting and tooling:
-- Python automation tools
-- Bash utilities
-- PowerShell modules/scripts
+**CAI_02 – CI/CD Pipeline with AWS Polly & GitHub Actions**  
+Built an automated pipeline integrating AWS Polly for text-to-speech generation, triggered via GitHub Actions, with artifacts stored in S3.  
+*Stack: AWS Polly, S3, IAM, GitHub Actions*
 
-### 🔹 Labs (`/labs`)
-Hands-on technical labs:
-- Cisco labs (CML/Packet Tracer configs)
-- Palo Alto firewall deployments
-- Meraki wireless/switching projects
-- AWS cloud labs
-- Azure cloud labs
+**CAI_03 – AgentCore / Strands Agentic Project**  
+Deployed an agentic AI workflow to AWS using AgentCore and Strands frameworks, hosted in us-east-1.  
+*Stack: AWS AgentCore, Strands, us-east-1*
 
-### 🔹 Docs (`/docs`)
-Supporting documents:
-- Notes and study references
-- Network & cloud architecture diagrams
-- Resume-ready project summaries
-- Certification notes and prep materials
+**CAI_04 – Python Student Grade Tracker with Boto3/S3**  
+Python CLI application integrating Boto3 and AWS S3 for cloud-based data persistence. Demonstrates practical AWS SDK usage, file I/O, and structured program design.  
+*Stack: Python, Boto3, AWS S3*
 
 ---
 
-## 🎯 Portfolio Goals
+### Labs (`/labs`)
 
-- Demonstrate real-world engineering skills  
-- Document problems I’ve solved and architectures I’ve built  
-- Show increasing depth in automation, networking, and cloud  
-- Provide recruiters and hiring managers with concrete examples  
-- Create an organized home for all technical work, past and future  
+Hands-on technical labs focused on Linux system administration, cloud infrastructure, and DevOps tooling. Includes:
 
----
-
-## 🚀 Upcoming Additions
-
-- BGP: dual-homed ISP lab with route filtering  
-- Terraform: AWS VPC + Site-to-Site VPN + Palo Alto VM-Series  
-- Azure: ExpressRoute lab with routing domains  
-- Python script: automated network reachability testing  
-- Packet Walks: DNS issues, NAT flows, internet troubleshooting  
+- Go-based system health monitor deployed to EC2
+- TCP network connectivity checker (versioned)
+- Docker fundamentals: Dockerfile creation, volume persistence, multi-container networking, Docker Compose, Docker Swarm
+- Linux server administration and automation
 
 ---
 
-## 📫 Contact
+### GitHub Actions Workflows (`.github/workflows`)
 
-GitHub: https://github.com/dkjordan73 
-LinkedIn: www.linkedin.com/in/dkjordan   
-Portfolio Website (Coming Soon): GitHub Pages  
+Automated CI/CD workflow configurations used across projects in this repo.
+
+---
+
+## Tech Used
+
+| Area | Tools |
+|---|---|
+| Cloud | AWS EC2, S3, Bedrock, AgentCore, Polly, IAM, VPC, CloudFormation |
+| Automation | Python, Boto3, Bash, Go |
+| CI/CD | GitHub Actions |
+| IaC | Terraform (HCL), CloudFormation |
+| Containers | Docker, Docker Compose, Docker Swarm |
+
+---
+
+## Background
+
+20 years in enterprise networking: Cisco Catalyst/Nexus/ISR, Palo Alto, Firepower, BGP/OSPF, MPLS, ExpressRoute, Azure VNets, IPSec VPN, SIP/VoIP. Now building cloud infrastructure skills on top of that foundation.
+
+More context at [medium.com/@SouthGA_CloudEngineer](https://medium.com/@SouthGA_CloudEngineer).
+
+---
+
+## Upcoming
+
+- Terraform: AWS VPC + Site-to-Site VPN lab with documented routing decisions
+- CloudWatch monitoring and alerting project tied to existing EC2 workloads
+- Python network automation scripts (BGP prefix validation, reachability testing)
+- AWS Transit Gateway lab with architecture writeup
+
+---
+
+## Contact
+
+GitHub: [github.com/dkjordan73](https://github.com/dkjordan73)  
+LinkedIn: [linkedin.com/in/dkjordan](https://www.linkedin.com/in/dkjordan)  
+Medium: [medium.com/@SouthGA_CloudEngineer](https://medium.com/@SouthGA_CloudEngineer)
 
